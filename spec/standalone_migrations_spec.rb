@@ -24,6 +24,12 @@ describe 'Standalone migrations' do
     `cd spec/tmp && #{cmd} 2>&1 && echo SUCCESS`
   end
 
+  def run!(cmd)
+    result = run(cmd)
+    raise result unless result.include?('SUCCESS')
+    result
+  end
+
   def run_with_output(cmd)
     `cd spec/tmp && #{cmd} 2>&1`
   end
@@ -163,7 +169,7 @@ end
         run("rake db:migrate").should =~ /SUCCESS/
       end
 
-      it "migrates if i add a migration" do
+      it "migrates if I add a migration" do
         run("rake db:new_migration name=xxx")
         result = run("rake db:migrate")
         result.should =~ /SUCCESS/
@@ -329,6 +335,16 @@ end
       result = run('rake db:schema:load')
       result.should =~ /SUCCESS/
       result.should =~ /LOADEDDD/
+    end
+
+    it "marks all migrations as run" do
+      make_migration('yyy')
+      sleep 1
+      make_migration('xxx')
+      run! "rake db:migrate"
+      run! "rake db:drop"
+      run! "rake db:schema:load"
+      run! "rake db:abort_if_pending_migrations"
     end
   end
 
